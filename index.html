@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b1a4a">
+<!-- v2.1-harder -->
 <title>Пенальти с Роналду — для Имрана</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -202,12 +203,12 @@ const HEROES={
  ronaldo:{name:'РОНАЛДУ',num:'7',sh:['#9c0d14','#e52d36','#f0444b'],trim:'#0a8a3a',shorts:['#08592a','#11904a'],sock:'#d4141b',numc:['#fff3a0','#ffb300'],namec:'#ffd23f',hair:['#4a2c18','#1e120a'],bun:false,cheer:'СИИИУ!'},
  haaland:{name:'ХОЛАНД',num:'9',sh:['#2f7fc4','#6cb7ee','#94cdf5'],trim:'#0b2a5c',shorts:['#c9d3e2','#ffffff'],sock:'#6cb7ee',numc:['#ffffff','#dfeaff'],namec:'#ffffff',hair:['#f6dc8c','#c99a3a'],bun:true,cheer:'БУМ!'}};
 const LEVELS=[
- {n:'Пенальти',icon:'⚽',hint:'Нажми в ворота, потом нажми на силу!',power:true,guess:.25},
- {n:'Свободный удар',icon:'🧱',hint:'Перебей стенку! Бей сильнее!',power:true,wall:true,guess:.2},
- {n:'Один на один',icon:'🏃',hint:'Вратарь бежит! Бей, когда круг зелёный!',rush:true,guess:.3},
- {n:'Пас и удар',icon:'🤝',hint:'Нажми на друга — пас! Потом бей в ворота!',pass:true,guess:.22},
- {n:'Финал',icon:'🏆',hint:'Финал! Вратарь самый хитрый!',power:true,guess:.36,final:true}];
-const PASSFROM={x:86,y:590},MATE={x:52,y:640},PASSHERO={x:262,y:655},WALLX=[164,187,210,233],WALLY=402;
+ {n:'Пенальти',icon:'⚽',hint:'Нажми в ворота, потом нажми на силу!',power:true,guess:.36},
+ {n:'Свободный удар',icon:'🧱',hint:'Перебей стенку! Бей сильнее!',power:true,wall:true,guess:.3},
+ {n:'Один на один',icon:'🏃',hint:'Вратарь бежит! Бей, когда круг зелёный!',rush:true,guess:.35},
+ {n:'Пас и удар',icon:'🤝',hint:'Нажми на друга — пас! Потом бей в ворота!',pass:true,guess:.36},
+ {n:'Финал',icon:'🏆',hint:'Финал! Вратарь самый хитрый!',power:true,guess:.5,final:true}];
+const PASSFROM={x:86,y:590},MATE={x:52,y:640},PASSHERO={x:262,y:655},WALLX=[152,176,200,224,248],WALLY=402;
 let prog={stars:[0,0,0,0,0],hero:'ronaldo',cup:false};
 try{const p=JSON.parse(localStorage.getItem('imranCup2')||'null');if(p&&Array.isArray(p.stars))prog=Object.assign(prog,p);}catch(e){}
 function saveProg(){try{localStorage.setItem('imranCup2',JSON.stringify(prog));}catch(e){}}
@@ -216,7 +217,7 @@ let hero=HEROES[prog.hero]?prog.hero:'ronaldo',level=0;
 // ---------- game state ----------
 let state='menu',kick=0,goals=0,results=[],target=null,hover=null,freeze=false,forceOut=null,cupParty=0;
 let runT=0,ballP=0,rt=0,isGoal=false,saved=false,t=0,shake=0,crowdEx=.15,flashes=[],conf=[],ripple=null;
-let outcome='',pw=0,powT=0,passT=0,runDur=.6,runFrom=IDLE;
+let aimT=0,outcome='',pw=0,powT=0,passT=0,runDur=.6,runFrom=IDLE;
 let ball={x:SPOT.x,y:SPOT.y-2,r:15,rot:0,inNet:false},keeper={x:200,y:212,by:212,sc:1,th:0,dive:0,arm:0,adv:0,home:200},player={x:IDLE.x,y:IDLE.y,phase:0,kick:0};
 function pl(n){const a=n%10,b=n%100;return n+' '+(a===1&&b!==11?'гол':a>=2&&a<=4&&(b<12||b>14)?'гола':'голов');}
 const L=()=>LEVELS[level];
@@ -225,7 +226,7 @@ function resetKick(){
   state=lv.pass?'pass':'aim';target=null;runT=0;ballP=0;rt=0;isGoal=false;saved=false;ripple=null;outcome='';pw=0;powT=0;passT=0;
   ball={x:SPOT.x,y:SPOT.y-2,r:15,rot:0,inNet:false,vy:0,vx:0,held:false,loose:false,feet:false,sx:SPOT.x,sy:SPOT.y-2,ex:200,ey:200,arc:55,gy:SPOT.y};
   if(lv.pass){ball.x=PASSFROM.x;ball.y=PASSFROM.y;ball.r=16.5;}
-  keeper={x:lv.pass?140:200,y:212,by:212,sc:1,th:0,dive:0,aim:null,fallV:0,arm:0,adv:0,home:lv.pass?140:200};
+  keeper={x:200,y:212,by:212,sc:1,th:0,dive:0,aim:null,fallV:0,arm:0,adv:0,home:200};aimT=0;
   runFrom=lv.rush?{x:KICKPOS.x-22,y:KICKPOS.y+34}:lv.pass?PASSHERO:IDLE;runDur=lv.rush?.3:.6;
   player={x:runFrom.x,y:runFrom.y,phase:0,kick:0};
   sWhistle();
@@ -239,13 +240,13 @@ function chooseKeeper(g){
     else keeper.aim={x:k.x-side*45,y:k.by,th:-side*.9};return;}
   let ax,ay;
   if(guess){const corner=Math.abs(T.x-200)>95&&T.y<170;
-    if(corner&&Math.random()<.5){ax=T.x-Math.sign(T.x-200)*48;ay=T.y+20;} else {ax=T.x+(Math.random()-.5)*10;ay=T.y+(Math.random()-.5)*10;saved=true;}}
+    if(corner&&Math.random()<.3){ax=T.x-Math.sign(T.x-200)*48;ay=T.y+20;} else {ax=T.x+(Math.random()-.5)*10;ay=T.y+(Math.random()-.5)*10;saved=true;}}
   else{const side=T.x>200?-1:1;ax=200+side*(30+Math.random()*90);ay=150+Math.random()*90;if(Math.abs(ax-T.x)<80)ax=T.x+side*90;}
   let th=Math.atan2(ax-200,-(ay-262));th=Math.max(-1.45,Math.min(1.45,th));
   let rx=ax-72*Math.sin(th),ry=ay+72*Math.cos(th);ry=Math.max(150,Math.min(222,ry));
   keeper.aim={x:rx,y:ry,th};
 }
-function powVal(){return .5-.5*Math.cos(powT*Math.PI*2/1.8);}
+function powVal(){return .5-.5*Math.cos(powT*Math.PI*2/1.3);}
 function onTap(px,py){
   if(state==='pass'){audio();state='passing';passT=0;sKick();return;}
   if(state==='power'){pw=powVal();state='run';runT=0;tone(880,.1,'triangle',.15);return;}
@@ -255,16 +256,20 @@ function onTap(px,py){
 }
 function launch(){
   const lv=L();outcome='goal';
-  if(lv.power){if(pw>.9)outcome='over';else if(lv.wall&&pw<.38)outcome='wall';}
-  let g=lv.guess+kick*.03;
-  if(lv.power&&!lv.wall&&pw<.38)g+=.3;
-  if(lv.rush){const a=keeper.adv;g=(a>=.28&&a<=.8)?.08:.6;}
+  if(lv.power){if(pw>.78)outcome='over';else if(lv.wall&&(pw<.5||target.y>205))outcome='wall';}
+  let g=lv.guess+kick*(lv.final?.06:.04);
+  if(lv.power&&!lv.wall&&pw<.45)g+=.35;
+  if(lv.wall&&target.y<170)g+=.12;
+  if(lv.pass&&aimT<.7)g+=.25;
+  if(lv.rush){const a=keeper.adv;g=(a>=.4&&a<=.66)?.2:.75;}
+  if(outcome==='goal'&&!lv.rush&&(Math.abs(target.x-GOAL.l)<24||Math.abs(target.x-GOAL.r)<24)&&Math.random()<.3)outcome='post';
   if(forceOut){outcome=forceOut==='save'?'goal':forceOut;g=forceOut==='save'?1:0;}
   if(outcome==='goal'){chooseKeeper(g);if(forceOut==='save'&&!saved){saved=true;keeper.aim={x:target.x-72*Math.sin(1.1),y:Math.min(222,target.y+72*Math.cos(1.1)),th:1.1};}if(forceOut==='goal')saved=false;if(saved)outcome='save';}
   else chooseKeeper(0);
-  ball.sx=ball.x;ball.sy=ball.y;ball.ex=target.x;ball.ey=target.y;ball.arc=lv.wall?100:55;ball.gy=250;
+  ball.sx=ball.x;ball.sy=ball.y;ball.ex=target.x;ball.ey=target.y;ball.arc=lv.wall?115:55;ball.gy=250;
+  if(outcome==='post'){ball.ex=Math.abs(target.x-GOAL.l)<Math.abs(target.x-GOAL.r)?GOAL.l:GOAL.r;ball.gy=250;}
   if(outcome==='over'){ball.ey=GOAL.top-60;ball.ex=target.x+(target.x-200)*.2;ball.arc=75;ball.gy=225;}
-  if(outcome==='wall'){ball.ex=Math.max(WALLX[0],Math.min(WALLX[3],200+(target.x-200)*.3));ball.ey=WALLY-40;ball.arc=20;ball.gy=WALLY;}
+  if(outcome==='wall'){ball.ex=Math.max(WALLX[0],Math.min(WALLX[4],200+(target.x-200)*.3));ball.ey=WALLY-50;ball.arc=20;ball.gy=WALLY;}
   state='fly';ballP=0;sKick();
 }
 function pathAt(q){const curve=(200-ball.ex)*(L().wall?.45:.25);
@@ -289,7 +294,7 @@ function failed(kind){outcome=kind;results.push(false);kick++;state='result';rt=
 
 // ---------- update ----------
 function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;}
-function rushStep(dt){const k=keeper;k.adv=Math.min(1,k.adv+dt/2.7);k.by=k.y=212+k.adv*112;k.sc=1+k.adv*.6;k.x+=(ball.x-k.x)*dt*1.5;
+function rushStep(dt){const k=keeper;k.adv=Math.min(1,k.adv+dt/2.0);k.by=k.y=212+k.adv*112;k.sc=1+k.adv*.6;k.x+=(ball.x-k.x)*dt*1.5;
   if(k.adv>=1){ball.feet=true;failed('tackle');}}
 function update(dt){
   t+=dt;
@@ -303,11 +308,11 @@ function update(dt){
   if(ripple)ripple.t+=dt;
   if(state==='menu'||state==='end'){keeper.x=200+Math.sin(t*1.5)*20;return;}
   if(state==='pass'){keeper.x=keeper.home+Math.sin(t*1.6)*15;return;}
-  if(state==='passing'){passT+=dt;const k=Math.min(1,passT/.55),e=ease(k);
+  if(state==='passing'){passT+=dt;const k=Math.min(1,passT/.85),e=ease(k);
     ball.x=PASSFROM.x+(SPOT.x-PASSFROM.x)*e;ball.y=PASSFROM.y+(SPOT.y-2-PASSFROM.y)*e;ball.r=16.5-1.5*e;ball.rot+=dt*14;
     keeper.home+=(200-keeper.home)*dt*1.2;keeper.x=keeper.home;
     if(k>=1){state='aim';}return;}
-  if(state==='aim'||state==='power'){player.phase+=dt*2;
+  if(state==='aim'||state==='power'){player.phase+=dt*2;if(state==='aim')aimT+=dt;
     if(L().rush){rushStep(dt);return;}
     keeper.home+=(200-keeper.home)*dt*.8;keeper.x=keeper.home+Math.sin(t*1.6)*22;
     if(state==='power')powT+=dt;return;}
@@ -324,7 +329,7 @@ function update(dt){
     ballP=Math.min(1,ballP+gdt/dur);player.kick=Math.min(2,player.kick+gdt*4);
     const[x,y]=pathAt(ballP);ball.x=x;ball.y=y;
     ball.r=outcome==='wall'?15/(1+ballP*.6):15/(1+ballP*1.25);ball.rot+=gdt*18;
-    if(ballP>.15)keeper.dive=Math.min(1,keeper.dive+gdt/(L().rush?.3:.42));
+    if(ballP>.1)keeper.dive=Math.min(1,keeper.dive+gdt/(L().rush?.26:L().final?.3:.34));
     updKeeper(gdt);
     const catchP=L().rush?.5:.9;
     if(outcome==='save'&&ballP>=catchP){ball.held=true;failed('save');}
@@ -332,6 +337,7 @@ function update(dt){
       if(outcome==='goal'){ball.inNet=true;ball.nx=ball.x;ball.ny=ball.y;ball.np=0;
         ball.bx=200+(target.x-200)*(BACK.r-200)/(GOAL.r-200);ball.by=BACK.top+(target.y-GOAL.top)/(GOAL.bot-GOAL.top)*(BACK.bot-BACK.top);scored();}
       else if(outcome==='over'){ball.loose=true;failed('over');}
+      else if(outcome==='post'){ball.loose=true;ball.vy=-120;ball.vx=(200-ball.x)*.8;ball.gy=262;tone(1200,.3,'triangle',.25,0,900);failed('post');}
       else if(outcome==='wall'){ball.loose=true;ball.vy=-170;ball.vx=(Math.random()-.5)*140;ball.gy=WALLY+14;tone(180,.15,'sine',.4,0,80);failed('wall');}
     }
     return;
@@ -572,10 +578,10 @@ function drawWall(c){
     c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(x,WALLY+2,13,4,0,0,7);c.fill();
     c.save();c.translate(x,WALLY-j);
     c.fillStyle='#8a8f9e';c.fillRect(-2,-16,4,16);
-    rr(c,-11,-60,22,46,10);const g=c.createLinearGradient(-11,0,11,0);g.addColorStop(0,'#f2a900');g.addColorStop(.45,'#ffe14d');g.addColorStop(1,'#e09500');c.fillStyle=g;c.fill();c.strokeStyle=OL;c.lineWidth=2.2;c.stroke();
+    rr(c,-11,-72,22,58,10);const g=c.createLinearGradient(-11,0,11,0);g.addColorStop(0,'#f2a900');g.addColorStop(.45,'#ffe14d');g.addColorStop(1,'#e09500');c.fillStyle=g;c.fill();c.strokeStyle=OL;c.lineWidth=2.2;c.stroke();
     c.fillStyle='rgba(0,0,0,.12)';c.fillRect(-11,-34,22,4);
-    circ(c,0,-68,10,'#ffe14d');circ(c,-3.5,-69,1.6,OL,false);circ(c,3.5,-69,1.6,OL,false);
-    c.strokeStyle=OL;c.lineWidth=1.4;c.beginPath();c.arc(0,-66,3.4,.3,Math.PI-.3);c.stroke();
+    circ(c,0,-80,10,'#ffe14d');circ(c,-3.5,-81,1.6,OL,false);circ(c,3.5,-81,1.6,OL,false);
+    c.strokeStyle=OL;c.lineWidth=1.4;c.beginPath();c.arc(0,-78,3.4,.3,Math.PI-.3);c.stroke();
     c.restore();});
 }
 function drawBallAll(c){
@@ -598,7 +604,7 @@ function drawPower(c){
   c.font=`900 14px ${FONT}`;c.textAlign='center';c.fillStyle='#fff';c.fillText('СИЛА',x+w/2,y0-18);
   rr(c,x,y0,w,h,10);c.save();c.clip();
   const zone=(a,b,col)=>{c.fillStyle=col;c.fillRect(x,y0+h*(1-b),w,h*(b-a));};
-  zone(0,.38,'#ffd23f');zone(.38,.9,'#2bd25a');zone(.9,1,'#ff3b3b');
+  zone(0,.45,'#ffd23f');zone(.45,.78,'#2bd25a');zone(.78,1,'#ff3b3b');
   c.fillStyle='rgba(255,255,255,.25)';c.fillRect(x,y0,w*.35,h);c.restore();
   rr(c,x,y0,w,h,10);c.strokeStyle=OL;c.lineWidth=2.5;c.stroke();
   const ny=y0+h*(1-v);c.fillStyle='#fff';c.strokeStyle=OL;c.lineWidth=2.5;c.beginPath();c.moveTo(x-12,ny-9);c.lineTo(x-1,ny);c.lineTo(x-12,ny+9);c.closePath();c.fill();c.stroke();
@@ -618,7 +624,7 @@ function draw(){
   drawNet(c);
   if(ball.inNet)drawBall(c,ball.x,ball.y,ball.r,ball.rot);
   drawPosts(c);
-  if(lv.rush&&['aim','run'].includes(state)){const k=keeper,sweet=k.adv>=.28&&k.adv<=.8;c.save();c.lineWidth=4;c.strokeStyle=sweet?'#2bd25a':k.adv<.28?'#ffd23f':'#ff3b3b';c.shadowColor=c.strokeStyle;c.shadowBlur=12;
+  if(lv.rush&&['aim','run'].includes(state)){const k=keeper,sweet=k.adv>=.4&&k.adv<=.66;c.save();c.lineWidth=4;c.strokeStyle=sweet?'#2bd25a':k.adv<.4?'#ffd23f':'#ff3b3b';c.shadowColor=c.strokeStyle;c.shadowBlur=12;
     c.beginPath();c.ellipse(k.x,k.by+40*k.sc,38*k.sc*(1+Math.sin(t*10)*.05),10*k.sc,0,0,7);c.stroke();c.restore();}
   const ballBehindWall=lv.wall&&(state==='fly'&&ballP>.42&&outcome!=='wall'||ball.inNet||(ball.loose&&outcome==='over'));
   const ballEarly=ball.held||ball.feet||ballBehindWall;
@@ -639,14 +645,14 @@ function draw(){
   if(target&&['power','run','fly'].includes(state))drawReticle(c,target.x,target.y,true);
   if(lv.power&&(state==='power'||state==='run'))drawPower(c);
   const by=Math.min(VB-40,690);
-  if(state==='aim'){if(lv.rush){const a=keeper.adv;banner(c,a<.28?'Жди… 👀':a<=.8?'Бей сейчас! 👆':'Скорее бей!',by,a>=.28&&a<=.8?'#2bd25a':'#ffd23f');}else banner(c,'👆 Нажми в ворота!',by);}
+  if(state==='aim'){if(lv.rush){const a=keeper.adv;banner(c,a<.4?'Жди… 👀':a<=.66?'Бей сейчас! 👆':'Скорее бей!',by,a>=.4&&a<=.66?'#2bd25a':'#ffd23f');}else banner(c,'👆 Нажми в ворота!',by);}
   if(state==='power')banner(c,'Нажми — сила! 💪',by);
   if(state==='pass')banner(c,'Нажми на '+HEROES[hero].name+' — пас!',by);
   for(const p of conf){c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.scale(Math.cos(t*8+p.fl),1);c.fillStyle=p.c;c.fillRect(-p.w/2,-p.h/2,p.w,p.h);c.restore();}
   if(state==='result'){
     if(isGoal){popText(c,'ГОЛ!',200,292,96,.0,'#fff7b0','#ffb300');popText(c,'Имран забил!',200,598,42,.35,'#ffffff','#cfe8ff');
       popText(c,HEROES[hero].cheer,200,662,72,1.2,'#ff8a8a','#e8232d');}
-    else{const M={save:['Вратарь поймал!','Ничего, ещё удар!'],over:['Выше ворот!','Чуть слабее!'],wall:['Попал в стенку!','Бей сильнее!'],tackle:['Вратарь успел!','Бей раньше!']}[outcome]||['Мимо!',''];
+    else{const M={save:['Вратарь поймал!',L().power&&pw<.45?'Слабо! Бей сильнее!':'Ничего, ещё удар!'],over:['Слишком сильно!','Выше ворот!'],post:['Штанга!','Целься чуть ближе к центру!'],wall:['Попал в стенку!',pw<.5?'Слабо! Бей сильнее!':'Бей выше!'],tackle:['Вратарь успел!','Бей раньше!']}[outcome]||['Мимо!',''];
       popText(c,M[0],200,600,44,.1,'#ffffff','#cfe8ff');if(kick<5)popText(c,M[1],200,658,32,.6,'#fff7b0','#ffd23f');}
   }
   if(state!=='menu')drawHUD(c);
@@ -727,7 +733,7 @@ addEventListener('resize',resize);resize();
   if(L().rush)sim(()=>keeper.adv>.4);
   onTap(L().wall&&mode==='wallhit'?200:290,165);
   if(state==='power'){if(mode==='power'){sim(()=>Math.abs(powVal()-.72)<.02);freeze=true;return;}
-    sim(()=>Math.abs(powVal()-(mode==='wallhit'?.2:.65))<.02);onTap(0,0);}
+    sim(()=>Math.abs(powVal()-(mode==='wallhit'?.2:.6))<.02);onTap(0,0);}
   const stop=mode==='shot'?()=>state==='fly'&&ballP>.55:mode==='goal'?()=>state==='result'&&rt>1.45:()=>state==='result'&&rt>.8;
   sim(stop);freeze=true;
 })();
