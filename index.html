@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b1a4a">
-<!-- v2.4-40pct -->
+<!-- v2.5-fresh -->
 <title>Пенальти с Роналду — для Имрана</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -212,8 +212,8 @@ const PW_LO=.22,PW_HI=.93,PW_PERIOD=2.5; // yellow<PW_LO<=green<=PW_HI<red. Gree
 function snapPw(v){if(v<PW_LO&&v>=PW_LO-.08)return PW_LO;if(v>PW_HI&&v<=PW_HI+.05)return PW_HI;return v;}
 const PASSFROM={x:86,y:590},MATE={x:52,y:640},PASSHERO={x:262,y:655},WALLX=[152,176,200,224,248],WALLY=402;
 let prog={stars:[0,0,0,0,0],hero:'ronaldo',cup:false};
-try{const p=JSON.parse(localStorage.getItem('imranCup2')||'null');if(p&&Array.isArray(p.stars))prog=Object.assign(prog,p);}catch(e){}
-function saveProg(){try{localStorage.setItem('imranCup2',JSON.stringify(prog));}catch(e){}}
+try{const p=JSON.parse(localStorage.getItem('imranCup3')||'null');if(p&&Array.isArray(p.stars))prog=Object.assign(prog,p);}catch(e){}
+function saveProg(){try{localStorage.setItem('imranCup3',JSON.stringify(prog));}catch(e){}}
 let hero=HEROES[prog.hero]?prog.hero:'ronaldo',level=0;
 
 // ---------- game state ----------
