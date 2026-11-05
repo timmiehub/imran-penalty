@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0b1a4a">
-<!-- v2.3-kids -->
+<!-- v2.4-40pct -->
 <title>Пенальти с Роналду — для Имрана</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -203,11 +203,11 @@ const HEROES={
  ronaldo:{name:'РОНАЛДУ',num:'7',sh:['#9c0d14','#e52d36','#f0444b'],trim:'#0a8a3a',shorts:['#08592a','#11904a'],sock:'#d4141b',numc:['#fff3a0','#ffb300'],namec:'#ffd23f',hair:['#4a2c18','#1e120a'],bun:false,cheer:'СИИИУ!'},
  haaland:{name:'ХОЛАНД',num:'9',sh:['#2f7fc4','#6cb7ee','#94cdf5'],trim:'#0b2a5c',shorts:['#c9d3e2','#ffffff'],sock:'#6cb7ee',numc:['#ffffff','#dfeaff'],namec:'#ffffff',hair:['#f6dc8c','#c99a3a'],bun:true,cheer:'БУМ!'}};
 const LEVELS=[
- {n:'Пенальти',icon:'⚽',hint:'Нажми в ворота, потом нажми на силу!',power:true,guess:.18},
- {n:'Свободный удар',icon:'🧱',hint:'Перебей стенку! Бей сильнее!',power:true,wall:true,guess:.15},
+ {n:'Пенальти',icon:'⚽',hint:'Нажми в ворота, потом нажми на силу!',power:true,guess:.22},
+ {n:'Свободный удар',icon:'🧱',hint:'Перебей стенку! Бей сильнее!',power:true,wall:true,guess:.19},
  {n:'Один на один',icon:'🏃',hint:'Вратарь бежит! Бей, когда круг зелёный!',rush:true,guess:.2},
- {n:'Пас и удар',icon:'🤝',hint:'Нажми на друга — пас! Потом бей в ворота!',pass:true,guess:.16},
- {n:'Финал',icon:'🏆',hint:'Финал! Вратарь самый хитрый!',power:true,guess:.28,final:true}];
+ {n:'Пас и удар',icon:'🤝',hint:'Нажми на друга — пас! Потом бей в ворота!',pass:true,guess:.2},
+ {n:'Финал',icon:'🏆',hint:'Финал! Вратарь самый хитрый!',power:true,guess:.32,final:true}];
 const PW_LO=.22,PW_HI=.93,PW_PERIOD=2.5; // yellow<PW_LO<=green<=PW_HI<red. Green NEVER walls/overs (see snapPw + launch)
 function snapPw(v){if(v<PW_LO&&v>=PW_LO-.08)return PW_LO;if(v>PW_HI&&v<=PW_HI+.05)return PW_HI;return v;}
 const PASSFROM={x:86,y:590},MATE={x:52,y:640},PASSHERO={x:262,y:655},WALLX=[152,176,200,224,248],WALLY=402;
@@ -259,12 +259,12 @@ function onTap(px,py){
 function launch(){
   const lv=L();outcome='goal';
   if(lv.power){if(pw>PW_HI)outcome='over';else if(lv.wall&&pw<PW_LO&&target.y>=200)outcome='wall';} // wall only: weak (yellow after snap) AND low aim
-  let g=lv.guess+kick*.02;
-  if(lv.power&&!lv.wall&&pw<PW_LO)g+=.18;
+  let g=lv.guess+kick*.025;
+  if(lv.power&&!lv.wall&&pw<PW_LO)g+=.22;
   if(lv.wall&&target.y<170)g+=.03;
   if(lv.pass&&aimT<.25)g+=.05;
-  if(lv.rush){const a=keeper.adv;g=(a>=.22&&a<=.82)?.08:.5;}
-  if(outcome==='goal'&&!lv.rush&&(Math.abs(target.x-GOAL.l)<20||Math.abs(target.x-GOAL.r)<20)&&Math.random()<.04)outcome='post';
+  if(lv.rush){const a=keeper.adv;g=(a>=.26&&a<=.78)?.1:.55;}
+  if(outcome==='goal'&&!lv.rush&&(Math.abs(target.x-GOAL.l)<20||Math.abs(target.x-GOAL.r)<20)&&Math.random()<.06)outcome='post';
   if(forceOut){outcome=forceOut==='save'?'goal':forceOut;g=forceOut==='save'?1:0;}
   if(outcome==='goal'){chooseKeeper(g);if(forceOut==='save'&&!saved){saved=true;keeper.aim={x:target.x-72*Math.sin(1.1),y:Math.min(222,target.y+72*Math.cos(1.1)),th:1.1};}if(forceOut==='goal')saved=false;if(saved)outcome='save';}
   else chooseKeeper(0);
@@ -296,7 +296,7 @@ function failed(kind){outcome=kind;results.push(false);kick++;state='result';rt=
 
 // ---------- update ----------
 function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;}
-function rushStep(dt){const k=keeper;k.adv=Math.min(1,k.adv+dt/2.7);k.by=k.y=212+k.adv*112;k.sc=1+k.adv*.6;k.x+=(ball.x-k.x)*dt*1.5;
+function rushStep(dt){const k=keeper;k.adv=Math.min(1,k.adv+dt/2.5);k.by=k.y=212+k.adv*112;k.sc=1+k.adv*.6;k.x+=(ball.x-k.x)*dt*1.5;
   if(k.adv>=1){ball.feet=true;failed('tackle');}}
 function update(dt){
   t+=dt;
@@ -331,7 +331,7 @@ function update(dt){
     ballP=Math.min(1,ballP+gdt/dur);player.kick=Math.min(2,player.kick+gdt*4);
     const[x,y]=pathAt(ballP);ball.x=x;ball.y=y;
     ball.r=outcome==='wall'?15/(1+ballP*.6):15/(1+ballP*1.25);ball.rot+=gdt*18;
-    if(ballP>.15)keeper.dive=Math.min(1,keeper.dive+gdt/(L().rush?.32:L().final?.38:.42));
+    if(ballP>.14)keeper.dive=Math.min(1,keeper.dive+gdt/(L().rush?.31:L().final?.36:.40));
     updKeeper(gdt);
     const catchP=L().rush?.5:.9;
     if(outcome==='save'&&ballP>=catchP){ball.held=true;failed('save');}
@@ -635,7 +635,7 @@ function draw(){
   drawNet(c);
   if(ball.inNet)drawBall(c,ball.x,ball.y,ball.r,ball.rot);
   drawPosts(c);
-  if(lv.rush&&['aim','run'].includes(state)){const k=keeper,sweet=k.adv>=.22&&k.adv<=.82;c.save();c.lineWidth=4;c.strokeStyle=sweet?'#2bd25a':k.adv<.22?'#ffd23f':'#ff3b3b';c.shadowColor=c.strokeStyle;c.shadowBlur=12;
+  if(lv.rush&&['aim','run'].includes(state)){const k=keeper,sweet=k.adv>=.26&&k.adv<=.78;c.save();c.lineWidth=4;c.strokeStyle=sweet?'#2bd25a':k.adv<.26?'#ffd23f':'#ff3b3b';c.shadowColor=c.strokeStyle;c.shadowBlur=12;
     c.beginPath();c.ellipse(k.x,k.by+40*k.sc,38*k.sc*(1+Math.sin(t*10)*.05),10*k.sc,0,0,7);c.stroke();c.restore();}
   const ballBehindWall=lv.wall&&(state==='fly'&&ballP>.3&&outcome!=='wall'||ball.inNet||(ball.loose&&outcome==='over'));
   const ballEarly=ball.held||ball.feet||ballBehindWall;
@@ -656,7 +656,7 @@ function draw(){
   if(target&&['power','run','fly'].includes(state))drawReticle(c,target.x,target.y,true);
   if(lv.power&&(state==='power'||state==='run'))drawPower(c);
   const by=Math.min(VB-40,690);
-  if(state==='aim'){if(lv.rush){const a=keeper.adv;banner(c,a<.22?'Жди… 👀':a<=.82?'Бей сейчас! 👆':'Скорее бей!',by,a>=.22&&a<=.82?'#2bd25a':'#ffd23f');}else banner(c,'👆 Нажми в ворота!',by);}
+  if(state==='aim'){if(lv.rush){const a=keeper.adv;banner(c,a<.26?'Жди… 👀':a<=.78?'Бей сейчас! 👆':'Скорее бей!',by,a>=.26&&a<=.78?'#2bd25a':'#ffd23f');}else banner(c,'👆 Нажми в ворота!',by);}
   if(state==='power')banner(c,'Нажми — сила! 💪',by);
   if(state==='pass')banner(c,'Нажми на '+HEROES[hero].name+' — пас!',by);
   for(const p of conf){c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.scale(Math.cos(t*8+p.fl),1);c.fillStyle=p.c;c.fillRect(-p.w/2,-p.h/2,p.w,p.h);c.restore();}
